@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com._520it.wms.mapper.OrderBillMapper" >
+  <resultMap id="BaseResultMap" type="com._520it.wms.domain.OrderBill" >
+    <id column="id" property="id" />
+    <result column="sn" property="sn" />
+    <result column="vdate" property="vdate" />
+    <result column="status" property="status" />
+    <result column="totalAmount" property="totalAmount" />
+    <result column="totalNumber" property="totalNumber" />
+    <result column="auditTime" property="auditTime" />
+    <result column="inputTime" property="inputTime" />
+
+    <association property="inputUser" javaType="com._520it.wms.domain.Employee" columnPrefix="iu_">
+      <id column="id" property="id"/>
+      <result column="name" property="name"/>
+    </association>
+    <association property="auditor" javaType="com._520it.wms.domain.Employee" columnPrefix="au_">
+      <id column="id" property="id"/>
+      <result column="name" property="name"/>
+    </association>
+    <association property="supplier" javaType="com._520it.wms.domain.Supplier" columnPrefix="s_">
+      <id column="id" property="id"/>
+      <result column="name" property="name"/>
+    </association>
+    <collection property="items" column="id" ofType="OrderBillItem" select="com._520it.wms.mapper.OrderBillItemMapper.selectByOrderBillId"/>
+  </resultMap>
+  <delete id="deleteByPrimaryKey" >
+    delete from `orderbill`
+    where id = #{id}
+  </delete>
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id" >
+    insert into `orderbill` (sn, vdate, status, totalAmount, totalNumber, auditTime, 
+      inputTime, inputUser_id, auditor_id, supplier_id)
+    values (#{sn}, #{vdate}, #{status}, #{totalAmount}, #{totalNumber}, #{auditTime}, 
+      #{inputTime}, #{inputUser.id}, #{auditor.id}, #{supplier.id})
+  </insert>
+  <update id="updateByPrimaryKey">
+    update `orderbill`
+    set sn = #{sn},
+      vdate = #{vdate},
+      totalAmount = #{totalAmount},
+      totalNumber = #{totalNumber},
+      supplier_id = #{supplier.id}
+    where id = #{id}
+  </update>
+  <update id="updateStates">
+    update orderbill
+    set status=#{status},
+    auditor_id=#{auditor.id},
+    auditTime=#{auditTime}
+    where id=#{id}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select b.id, b.sn, b.vdate, b.status, b.totalAmount, b.totalNumber, b.auditTime, b.inputTime,
+      iu.id as iu_id,iu.name as iu_name,
+      au.id as au_id,au.name as au_name,
+      s.id as s_id,s.name as s_name
+      from orderbill b join supplier s on b.supplier_id=s.id
+      join employee iu on b.inputUser_id=iu.id
+      left join employee au on b.auditor_id=au.id
+    where b.id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap" >
+     select b.id, b.sn, b.vdate, b.status, b.totalAmount, b.totalNumber, b.auditTime, b.inputTime,
+      iu.id as iu_id,iu.name as iu_name,
+      au.id as au_id,au.name as au_name,
+      s.id as s_id,s.name as s_name
+      from orderbill b join supplier s on b.supplier_id=s.id
+      join employee iu on b.inputUser_id=iu.id
+      left join employee au on b.auditor_id=au.id
+  </select>
+  <sql id="base_where">
+    <where>
+      <if test="beginDate!=null">
+          b.vdate>=#{beginDate}
+      </if>
+      <if test="endDate!=null">
+        and b.vdate &lt;=#{endDate}
+      </if>
+      <if test="supplierId>0">
+        and b.supplier_id = #{supplierId}
+      </if>
+      <if test="status>=0">
+        and b.status=#{status}
+      </if>
+    </where>
+  </sql>
+    <select id="queryForCount" resultType="int">
+      select count(b.id) from orderbill b
+      join supplier s on b.supplier_id=s.id
+      join employee iu on b.inputUser_id=iu.id
+      left join employee au on b.auditor_id=au.id
+      <include refid="base_where"/>
+    </select>
+  <select id="queryForList" resultMap="BaseResultMap">
+      select b.id, b.sn, b.vdate, b.status, b.totalAmount, b.totalNumber, b.auditTime, b.inputTime,
+      iu.id as iu_id,iu.name as iu_name,
+      au.id as au_id,au.name as au_name,
+      s.id as s_id,s.name as s_name
+      from orderbill b join supplier s on b.supplier_id=s.id
+      join employee iu on b.inputUser_id=iu.id
+      left join employee au on b.auditor_id=au.id
+      <include refid="base_where"/>
+      limit #{start},#{pageSize}
+  </select>
+</mapper>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+              http://www.springframework.org/schema/beans/spring-beans.xsd
+              http://www.springframework.org/schema/context 
+              http://www.springframework.org/schema/context/spring-context.xsd
+               http://www.springframework.org/schema/aop
+              http://www.springframework.org/schema/aop/spring-aop.xsd
+               http://www.springframework.org/schema/mvc
+              http://www.springframework.org/schema/mvc/spring-mvc.xsd
+                 http://www.springframework.org/schema/tx
+              http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+
+	<import resource="classpath:applicationContext.xml"/>
+
+	
+	<!-- 开启注解扫描 -->
+	<context:component-scan base-package="com._520it.wms.web.controller"/>
+	<!-- 支持springMVC的注解驱动 -->
+	<mvc:annotation-driven/>
+	
+	<!-- SpringMVC的静态资源处理配置 -->
+	<mvc:default-servlet-handler/>
+	
+	
+	
+	<!-- 配置视图解析器 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/views/"/>
+		<property name="suffix" value=".jsp"/>
+	</bean>
+	
+	<!-- 文件上传解析器 -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 设置上传文件的最大尺寸为10MB -->
+		<property name="maxUploadSize">
+			<value>10485760</value>
+		</property>
+	</bean>
+
+	<!--统一异常处理器-->
+	<!--<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		&lt;!&ndash; 定义默认的异常处理页面，当该异常类型的注册时使用 &ndash;&gt;
+		<property name="defaultErrorView" value="commons/error"/>
+		&lt;!&ndash; 定义异常处理页面用来获取异常信息的变量名，默认名为exception &ndash;&gt;
+		<property name="exceptionAttribute" value="ex"/>
+		&lt;!&ndash;定义需要特殊处理的异常，用类名或完全路径名作为key，异常页名作为值&ndash;&gt;
+		<property name="exceptionMappings">
+			<value>
+				com._520it.wms.util.SystemException=commons/nopermission
+			</value>
+		</property>
+	</bean>-->
+
+
+
+	<!-- 登录检查的拦截器 -->
+	<mvc:interceptors>
+		<!--需要拦截的路径-->
+		<!--
+		/* 只能拦截一级路径
+        /** 可以拦截一级，也可以拦截多级路径
+        -->
+		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+			<!--排除拦截的路径-->
+			<mvc:exclude-mapping path="/login.do"/>
+			<!--拦截器处理类-->
+			<bean class="com._520it.wms.web.interceptor.CheckLoginInterceptor"/>
+		</mvc:interceptor>
+		<!--权限检查拦截器-->
+		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+			<!--拦截器处理类-->
+			<mvc:exclude-mapping path="/login.do"/>
+			<bean class="com._520it.wms.web.interceptor.SecurityInterceptor"/>
+		</mvc:interceptor>
+	</mvc:interceptors>
+
+</beans>

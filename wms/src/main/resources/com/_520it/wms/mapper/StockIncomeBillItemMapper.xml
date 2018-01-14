@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com._520it.wms.mapper.StockIncomeBillItemMapper" >
+  <resultMap id="BaseResultMap" type="com._520it.wms.domain.StockIncomeBillItem" >
+    <id column="id" property="id" />
+    <result column="costPrice" property="costPrice" />
+    <result column="number" property="number" />
+    <result column="amount" property="amount" />
+    <result column="remark" property="remark" />
+    <result column="bill_id" property="billId" />
+    <association property="product" javaType="com._520it.wms.domain.Product" columnPrefix="p_">
+    <id column="id" property="id"/>
+    <result column="name" property="name"/>
+    <result column="brandName" property="brandName"/>
+  </association>
+  </resultMap>
+
+  <insert id="insert"  useGeneratedKeys="true" keyProperty="id" >
+    insert into `stockincomebillitem` (costPrice, number, amount, remark, product_id, bill_id)
+    values (#{costPrice}, #{number}, #{amount}, #{remark}, #{product.id}, #{billId})
+  </insert>
+  <delete id="deleteByBillId">
+    delete from stockincomebillitem where bill_id=#{billId}
+  </delete>
+
+  <select id="selectAll" resultMap="BaseResultMap" >
+    select id,amount,costPrice,remark,number,product_id,bill_id
+		from StockIncomeBillItem
+  </select>
+
+    <select id="selectByStockIncomeBillId" resultMap="BaseResultMap">
+  select item.id, item.costPrice, item.number, item.amount, item.remark,item.bill_id,
+        p.id as p_id,p.name as p_name,p.brandName as P_brandName
+		from StockIncomeBillItem item join product p on item.product_id=p.id
+		where item.bill_id=#{stockIncomeBillId}
+    </select>
+</mapper>

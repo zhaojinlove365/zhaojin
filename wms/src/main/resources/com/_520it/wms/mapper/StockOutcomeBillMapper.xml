@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com._520it.wms.mapper.StockOutcomeBillMapper" >
+  <resultMap id="BaseResultMap" type="com._520it.wms.domain.StockOutcomeBill" >
+    <id column="id" property="id" />
+    <result column="sn" property="sn" />
+    <result column="vdate" property="vdate" />
+    <result column="status" property="status" />
+    <result column="totalAmount" property="totalAmount" />
+    <result column="totalNumber" property="totalNumber" />
+    <result column="auditTime" property="auditTime" />
+    <result column="inputTime" property="inputTime" />
+
+    <association property="inputUser" javaType="com._520it.wms.domain.Employee" columnPrefix="iu_">
+      <id column="id" property="id"/>
+      <result column="name" property="name"/>
+    </association>
+    <association property="auditor" javaType="com._520it.wms.domain.Employee" columnPrefix="au_">
+      <id column="id" property="id"/>
+      <result column="name" property="name"/>
+    </association>
+    <association property="depot" javaType="com._520it.wms.domain.Depot" columnPrefix="d_">
+      <id column="id" property="id"/>
+      <result column="name" property="name"/>
+    </association>
+    <association property="client" javaType="com._520it.wms.domain.Client" columnPrefix="c_">
+      <id column="id" property="id"/>
+      <result column="name" property="name"/>
+    </association>
+    <collection property="items" column="id" ofType="com._520it.wms.domain.StockOutcomeBillItem" select="com._520it.wms.mapper.StockOutcomeBillItemMapper.selectByStockOutcomeBillId"/>
+  </resultMap>
+  <delete id="deleteByPrimaryKey" >
+    delete from `stockoutcomebill`
+    where id = #{id}
+  </delete>
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id" >
+    insert into `stockoutcomebill` (sn, vdate, status, totalAmount, totalNumber, auditTime, 
+      inputTime, inputUser_id, auditor_id, depot_id,client_id)
+    values (#{sn}, #{vdate}, #{status}, #{totalAmount}, #{totalNumber}, #{auditTime}, 
+      #{inputTime}, #{inputUser.id}, #{auditor.id}, #{depot.id},#{client.id})
+  </insert>
+  <update id="updateByPrimaryKey">
+    update `stockoutcomebill`
+    set sn = #{sn},
+      vdate = #{vdate},
+      totalAmount = #{totalAmount},
+      totalNumber = #{totalNumber},
+      client_id=#{client.id},
+      depot_id = #{depot.id}
+    where id = #{id}
+  </update>
+  <update id="updateStates">
+    update stockoutcomebill
+    set status=#{status},
+    auditor_id=#{auditor.id},
+    auditTime=#{auditTime}
+    where id=#{id}
+  </update>
+  <sql id="base_column">
+    b.id, b.sn, b.vdate, b.status, b.totalAmount, b.totalNumber, b.auditTime, b.inputTime,
+      iu.id as iu_id,iu.name as iu_name,
+      au.id as au_id,au.name as au_name,
+      d.id as d_id,d.name as d_name,
+      c.id as c_id,c.name as c_name
+  </sql>
+  <sql id="base_table">
+    stockoutcomebill b join depot d on b.depot_id=d.id
+      join employee iu on b.inputUser_id=iu.id
+      left join employee au on b.auditor_id=au.id
+      left join client c on b.client_id=c.id
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" >
+    select <include refid="base_column"/>
+      from <include refid="base_table"/>
+    where b.id = #{id}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap" >
+     select <include refid="base_column"/>
+      from <include refid="base_table"/>
+  </select>
+  <sql id="base_where">
+    <where>
+      <if test="beginDate!=null">
+          b.vdate>=#{beginDate}
+      </if>
+      <if test="endDate!=null">
+        and b.vdate &lt;=#{endDate}
+      </if>
+      <if test="depotId>0">
+        and b.depot_id = #{depotId}
+      </if>
+      <if test="clientId>0">
+        and b.client_id = #{clientId}
+      </if>
+      <if test="status>=0">
+        and b.status=#{status}
+      </if>
+    </where>
+  </sql>
+    <select id="queryForCount" resultType="int">
+      select count(b.id) from
+      <include refid="base_table"/>
+      <include refid="base_where"/>
+    </select>
+  <select id="queryForList" resultMap="BaseResultMap">
+      select <include refid="base_column"/>
+      from <include refid="base_table"/>
+      <include refid="base_where"/>
+      limit #{start},#{pageSize}
+  </select>
+</mapper>

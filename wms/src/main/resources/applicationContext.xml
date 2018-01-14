@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+              http://www.springframework.org/schema/beans/spring-beans.xsd
+              http://www.springframework.org/schema/context 
+              http://www.springframework.org/schema/context/spring-context.xsd
+               http://www.springframework.org/schema/aop
+              http://www.springframework.org/schema/aop/spring-aop.xsd
+                 http://www.springframework.org/schema/tx
+              http://www.springframework.org/schema/tx/spring-tx.xsd">
+	
+	<!-- Ioc注解解析器 -->
+	<context:component-scan base-package="com._520it.wms"/>
+	<!-- DI注解解析器 -->
+	<context:annotation-config/>
+	
+	<!-- 表明需要为哪些包中的接口做代理 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com._520it.wms.mapper"/>
+	</bean>
+	
+	<!-- aop的注解解析器 -->
+	<aop:aspectj-autoproxy />
+	<context:property-placeholder location="classpath:db.properties"
+		system-properties-mode="NEVER" />
+
+	<!-- 配置一个连接池的实例 -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"
+		init-method="init" destroy-method="close">
+		<property name="driverClassName" value="${driverClassName}"/>
+		<property name="url" value="${url}"/>
+		<property name="username" value="${username}"/>
+		<property name="password" value="${password}"/>
+		<property name="filters" value="config,stat"/>
+		<property name="connectionProperties" value="config.decrypt=true"/>
+	</bean>
+	
+		<!-- 配置一个事务管理器 -->
+	<bean id="txManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	
+		<!-- 把事务管理器打包，何时，做何事 -->
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<tx:method name="get*" read-only="true" />
+			<tx:method name="query*" read-only="true" />
+			<tx:method name="list*" read-only="true" />
+			<tx:method name="*" propagation="REQUIRES_NEW" />
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- 使用aop将事务管理逻辑代码织入指定的方法 -->
+	<aop:config>
+		<aop:pointcut expression="execution(* com._520it.wms.service.*.*(..))"
+			id="pc" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="pc" />
+	</aop:config>
+
+	<!-- 创建SqlSessionFactory对象，先找到SqlSessionFactoryBean -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation" value="classpath:mybatis-config.xml"/>
+		<property name="mapperLocations" value="classpath:com/_520it/wms/mapper/*Mapper.xml"/>
+		<property name="dataSource" ref="dataSource"/>
+		<!-- 指定为哪个包中类生成别名 -->
+		<property name="typeAliasesPackage" value="com._520it.wms.domain"/>
+	</bean>
+
+</beans>
